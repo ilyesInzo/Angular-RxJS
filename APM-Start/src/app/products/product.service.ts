@@ -5,13 +5,18 @@ import {
   catchError,
   combineLatest,
   map,
+  merge,
   Observable,
+  scan,
+  shareReplay,
+  Subject,
   tap,
   throwError,
 } from 'rxjs';
 
 import { Product } from './product';
 import { ProductCategoryService } from '../product-categories/product-category.service';
+import { SupplierService } from '../suppliers/supplier.service';
 
 @Injectable({
   providedIn: 'root',
@@ -19,6 +24,12 @@ import { ProductCategoryService } from '../product-categories/product-category.s
 export class ProductService {
   private productsUrl = 'api/products';
   private suppliersUrl = 'api/suppliers';
+
+  private selectedProductSubject = new Subject<number>();
+  selectedProductAction$ = this.selectedProductSubject.asObservable();
+
+  private insertProductSubject = new Subject<Product>();
+  insertProductAction$ = this.insertProductSubject.asObservable();
 
   products$ = this.http.get<Product[]>(this.productsUrl).pipe(
     map((products) =>
@@ -49,9 +60,38 @@ export class ProductService {
     )
   );
 
+  selectedProduct$ = combineLatest([
+    this.productsWithCategories$.pipe(shareReplay(1)),
+    this.selectedProductAction$,
+  ]).pipe(
+    map(([products, selectedProjectId]) =>
+      products.find((product) => product.id === selectedProjectId)
+    ),
+    catchError(this.handleError)
+  );
+
+  productsWithAdd$ = merge(
+    this.productsWithCategories$,
+    this.insertProductAction$
+  ).pipe(
+    scan(
+      (acc, value) => (value instanceof Array ? [...value] : [...acc, value]),
+      [] as Product[]
+    )
+  );
+
+  addProduct(product?: Product) {
+    this.insertProductSubject.next(product ?? this.fakeProduct());
+  }
+
+  addSelection(productId: number) {
+    this.selectedProductSubject.next(productId);
+  }
+
   constructor(
     private http: HttpClient,
-    private productCategory: ProductCategoryService
+    private productCategory: ProductCategoryService,
+    private supplierService: SupplierService
   ) {}
 
   private fakeProduct(): Product {

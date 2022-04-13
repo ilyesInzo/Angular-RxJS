@@ -27,7 +27,8 @@ import { ProductService } from './product.service';
 })
 export class ProductListComponent {
   pageTitle = 'Product List';
-  errorMessage = '';
+  private errorMessageSubject = new Subject<String>();
+  errorMessageAction$ = this.errorMessageSubject.asObservable();
   categories: ProductCategory[] = [];
   selectedCategoryId = 1;
 
@@ -37,7 +38,7 @@ export class ProductListComponent {
   categories$ = this.productCategoryService.categories$;
 
   products$ = combineLatest([
-    this.productService.productsWithCategories$,
+    this.productService.productsWithAdd$, // productWithAdd to test insert action
     this.categorySelectedAction.pipe(startWith(0)), // or remove this pipe and use behaviourSubject instead
   ]).pipe(
     map(([products, categoryId]) =>
@@ -46,7 +47,7 @@ export class ProductListComponent {
       )
     ),
     catchError((err) => {
-      this.errorMessage = err;
+      this.errorMessageSubject.next(err);
       return EMPTY;
     })
   );
@@ -57,7 +58,7 @@ export class ProductListComponent {
   ) {}
 
   onAdd(): void {
-    console.log('Not yet implemented');
+    this.productService.addProduct();
   }
 
   onSelected(categoryId: string): void {

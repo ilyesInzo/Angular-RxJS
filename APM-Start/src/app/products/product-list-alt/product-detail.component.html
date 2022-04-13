@@ -1,5 +1,5 @@
 <div class="card"
-     *ngIf="product">
+     *ngIf="selectedProduct$ |async as product">
   <div class="card-header">
     {{ pageTitle }}
   </div>
@@ -15,7 +15,7 @@
     </div>
     <div class="row">
       <div class="col-md-2">Category:</div>
-      <div class="col-md-6">{{ product.categoryId }}</div>
+      <div class="col-md-6">{{ product.category?.name }}</div>
     </div>
     <div class="row">
       <div class="col-md-2">Description:</div>
@@ -59,6 +59,6 @@
 </div>
 
 <div class="alert alert-danger"
-     *ngIf="errorMessage">
+     *ngIf="errorMessageAction$ |async as errorMessage">
   {{ errorMessage }}
 </div>

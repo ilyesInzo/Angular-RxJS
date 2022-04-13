@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
-import { throwError, Observable, tap, catchError } from 'rxjs';
+import { throwError, Observable, tap, catchError, shareReplay } from 'rxjs';
 import { ProductCategory } from './product-category';
 
 @Injectable({
@@ -16,6 +16,7 @@ export class ProductCategoryService {
       tap((data) => {
         console.log('Data retrieved : ', JSON.stringify(data));
       }),
+      shareReplay(1),
       catchError(this.handleError)
     );
 
